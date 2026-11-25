@@ -1,0 +1,28 @@
+# Audios renderizados y binarios pesados (política estricta: solo síntesis Web Audio API)
+audio/
+*.mp3
+*.wav
+app/biblioteca.js
+
+# Python / cachés / entornos virtuales
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Temporales y sistema operativo
+tmp/
+temp/
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Entorno local, secretos y trazabilidad interna con rutas locales
+.env
+.env.*
+AGENTS.md

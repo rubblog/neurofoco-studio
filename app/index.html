@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NeuroFoco Studio: sintetizador de sonido de estudio en tiempo real con Pomodoro, modulación de amplitud y dossier científico.">
+  <title>NeuroFoco Studio · Sonido de estudio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">🎛️</div>
+    <div>
+      <h1>NeuroFoco Studio</h1>
+      <p>Sonido de estudio sintetizado en tiempo real en tu navegador · sin descargas · sin suscripciones</p>
+    </div>
+  </div>
+  <div class="top-right">
+    <span class="pill ok" id="pill-offline">● Web Audio API</span>
+    <button type="button" class="pill link" id="btn-tema" title="Alternar tema claro/oscuro">☀️ Claro</button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist">
+  <button class="tab active" data-tab="estudio" role="tab">🎧 Estudio</button>
+  <button class="tab" data-tab="ciencia" role="tab">🔬 Ciencia</button>
+  <button class="tab" data-tab="guia" role="tab">🧭 Guía</button>
+</nav>
+
+<main>
+<!-- ===================================================== ESTUDIO -->
+<section id="tab-estudio" class="panel active">
+  <div class="aviso" id="aviso-audio">Pulsa <strong>Empezar</strong> para activar el audio (los navegadores exigen un clic). Empieza con el volumen bajo y sube hasta un nivel cómodo: debe poder ignorarse.</div>
+
+  <h2 class="sec">1 · Elige el sonido</h2>
+  <div class="modos" id="grid-modos"></div>
+
+  <div class="dos-col">
+    <div class="card" id="card-timer">
+      <h2 class="sec">2 · Sesión</h2>
+      <div class="presets" id="presets">
+        <button data-p="25,5" class="chip">Pomodoro 25/5</button>
+        <button data-p="50,10" class="chip">Pomodoro 50/10</button>
+        <button data-p="90,15" class="chip">Bloque 90/15</button>
+        <button data-p="libre" class="chip">Continua</button>
+      </div>
+      <div class="campos">
+        <label>Trabajo (min) <input type="number" id="in-trabajo" min="1" max="180" value="25"></label>
+        <label>Descanso (min) <input type="number" id="in-descanso" min="1" max="60" value="5"></label>
+        <label>Ciclos <select id="in-ciclos"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="6">6</option><option value="8">8</option><option value="0">∞</option></select></label>
+      </div>
+
+      <div class="reloj">
+        <svg viewBox="0 0 200 200" class="anillo" aria-hidden="true">
+          <circle cx="100" cy="100" r="88" class="anillo-fondo"></circle>
+          <circle cx="100" cy="100" r="88" class="anillo-prog" id="anillo-prog" transform="rotate(-90 100 100)"></circle>
+        </svg>
+        <div class="reloj-txt">
+          <div id="fase-lbl" class="fase">Listo</div>
+          <div id="tiempo" class="tiempo">25:00</div>
+          <div id="ciclo-lbl" class="ciclo">Ciclo 1 de 4</div>
+        </div>
+      </div>
+
+      <div class="controles">
+        <button class="btn primario" id="btn-start">▶ Empezar</button>
+        <button class="btn" id="btn-pausa" disabled>⏸ Pausa</button>
+        <button class="btn" id="btn-skip" disabled>⏭ Saltar fase</button>
+        <button class="btn peligro" id="btn-stop" disabled>⏹ Terminar</button>
+      </div>
+      <div class="hint">Atajo: <kbd>Espacio</kbd> empieza / pausa. Las campanas avisan de cada cambio de fase.</div>
+      <div id="valoracion" class="valoracion" hidden>
+        <span>¿Qué tal ha ido el foco?</span>
+        <button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="sec">3 · Mezcla</h2>
+      <div class="vol-grande"><label>🔊 Volumen <output id="o-vol">60</output></label>
+        <input type="range" id="r-vol" min="0" max="100" value="60"></div>
+      <div class="sliders">
+        <label>Graves (ruido marrón) <output id="o-lecho">100</output><input type="range" id="r-lecho" min="0" max="150" value="100"></label>
+        <label>Aire (ruido rosa) <output id="o-aire">100</output><input type="range" id="r-aire" min="0" max="150" value="100"></label>
+        <label>Pad armónico <output id="o-pad">100</output><input type="range" id="r-pad" min="0" max="150" value="100"></label>
+        <label>Profundidad del pulso <output id="o-prof">100</output><input type="range" id="r-prof" min="0" max="200" value="100"></label>
+        <label>Campanas <output id="o-camp">100</output><input type="range" id="r-camp" min="0" max="150" value="100"></label>
+        <div class="camp-test">
+          <button type="button" class="chip" id="btn-camp-trabajo">🔔 Probar trabajo</button>
+          <button type="button" class="chip" id="btn-camp-descanso">🔔 Probar descanso</button>
+        </div>
+      </div>
+      <details class="avanzado">
+        <summary>Avanzado: frecuencia de pulso libre</summary>
+        <label><input type="checkbox" id="chk-hz"> Usar frecuencia propia: <output id="o-hz">16</output> Hz</label>
+        <input type="range" id="r-hz" min="2" max="45" step="0.5" value="16" disabled>
+        <p class="hint">Las frecuencias distintas de las del modo no tienen respaldo científico propio; sirve para experimentar.</p>
+      </details>
+      <canvas id="viz" width="640" height="150" aria-label="Espectro de audio"></canvas>
+      <div class="stats">
+        <div><strong id="st-hoy">0</strong><span>min de foco hoy</span></div>
+        <div><strong id="st-sesiones">0</strong><span>bloques hoy</span></div>
+        <div><strong id="st-mejor">—</strong><span>mejor modo (tu media)</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="card-diario">
+    <h2 class="sec">Tu propia evidencia</h2>
+    <p class="hint">Cada bloque que valoras (1-5) se guarda solo en este navegador. Tras unas semanas verás qué sonido te funciona de verdad, que es lo que cuenta.</p>
+    <div id="tabla-diario"></div>
+    <div class="controles"><button class="btn" id="btn-csv">⬇ Exportar CSV</button><button class="btn peligro" id="btn-borrar">Borrar diario</button></div>
+  </div>
+</section>
+
+<!-- ===================================================== CIENCIA -->
+<section id="tab-ciencia" class="panel">
+  <div class="aviso">Dossier honesto: qué está respaldado por estudios revisados por pares, qué es preliminar y qué es marketing. Las valoraciones ★ son <em>mías</em> como resumen divulgativo; verifica las referencias antes de citarlas en trabajos formales.</div>
+
+  <div class="cuadros">
+    <article class="ev" style="--c:#38bdf8">
+      <header><h3>Beta · 16 Hz · modulación rápida de amplitud</h3><span class="est">★★★☆☆</span></header>
+      <p><strong>Lo visto:</strong> en <em>Woods et al. (2024, Communications Biology)</em>, música con modulación rápida de amplitud mejoró la atención sostenida frente a música control, sobre todo en personas con más síntomas de TDAH; fMRI y EEG mostraron mayor implicación de redes atencionales y acoplamiento neural con la modulación.</p>
+      <p><strong>Matices:</strong> autoría vinculada a Brain.fm (conflicto de intereses), tareas de laboratorio cortas, efecto modesto, un solo grupo. NeuroFoco usa ruido + pad sintético propio, no la música de ese estudio: es una <em>hipótesis razonable</em>, no una garantía.</p>
+      <p><strong>Úsalo para:</strong> trabajo técnico y supuestos prácticos. Pruébalo contra el modo de ruido puro y valora tus bloques.</p>
+    </article>
+    <article class="ev" style="--c:#facc15">
+      <header><h3>Gamma · 40 Hz</h3><span class="est">★☆☆☆☆</span></header>
+      <p><strong>Lo visto:</strong> la respuesta cerebral a 40 Hz (ASSR) es real y robusta (<em>Galambos et al., 1981</em>). En ratones, la estimulación sensorial a 40 Hz redujo amiloide (<em>Iaccarino et al., 2016, Nature; Martorell et al., 2019, Cell</em>); en humanos se investiga en alzhéimer.</p>
+      <p><strong>Lo no demostrado:</strong> que mejore la memorización en estudiantes sanos. Se incluye por variedad y por su textura estimulante, en bloques cortos.</p>
+    </article>
+    <article class="ev" style="--c:#34d399">
+      <header><h3>Alfa · 10 Hz</h3><span class="est">★☆☆☆☆</span></header>
+      <p><strong>Lo visto:</strong> el ritmo alfa se asocia a inhibición de distracciones y atención interna (<em>Klimesch, 2012, Trends Cogn Sci</em>).</p>
+      <p><strong>Lo no demostrado:</strong> que arrastrarlo con sonido mejore la lectura. Su valor práctico es un fondo grave, suave y cómodo.</p>
+    </article>
+    <article class="ev" style="--c:#a78bfa">
+      <header><h3>Theta · 6 Hz</h3><span class="est">★☆☆☆☆</span></header>
+      <p><strong>Lo visto:</strong> theta frontal-medial se vincula a memoria de trabajo y control cognitivo (<em>Hsieh &amp; Ranganath, 2014, NeuroImage</em>).</p>
+      <p><strong>Para pausas:</strong> lo que descansa es dejar de trabajar. Los descansos breves ayudan a sostener la atención (<em>Ariga &amp; Lleras, 2011, Cognition</em>); el sonido lento solo acompaña.</p>
+    </article>
+    <article class="ev" style="--c:#94a3b8">
+      <header><h3>Ruido marrón / rosa / blanco</h3><span class="est">★★★☆☆</span></header>
+      <p><strong>Lo respaldado:</strong> enmascarar habla y sonidos intermitentes reduce su efecto perturbador (<em>Jahncke et al., 2011, J Environ Psychol</em>). Ruido blanco: beneficio pequeño y variable, mayor en personas con atención baja (<em>Söderlund et al., 2007; Rausch et al., 2014</em>).</p>
+      <p><strong>Ojo:</strong> para el marrón no hay estudios específicos revisados por pares; es preferencia. A volumen alto el ruido empeora el rendimiento.</p>
+    </article>
+  </div>
+
+  <h2 class="sec">Lo más sólido (y gratis)</h2>
+  <ul class="lista">
+    <li><strong>Evita voz y letras</strong> al leer o escribir: perjudican la comprensión lectora aunque sea tu música favorita (<em>Perham &amp; Currie, 2014, Appl Cogn Psychol</em>).</li>
+    <li><strong>Tapa los ruidos impredecibles</strong> (habla, puertas, notificaciones) con un fondo constante a volumen moderado.</li>
+    <li><strong>Haz pausas reales</strong>: levántate, mira lejos, agua. El ratio exacto 25/5 vs 50/10 no tiene ensayos concluyentes: elige según carga y fatiga.</li>
+    <li><strong>Sueño, luz y movimiento</strong> pesan mucho más que cualquier frecuencia.</li>
+  </ul>
+
+  <h2 class="sec">Mitos y cautelas</h2>
+  <ul class="lista">
+    <li><strong>Efecto Mozart:</strong> sin efecto específico sobre la inteligencia en el metaanálisis de <em>Pietschnig et al. (2010, Intelligence)</em>.</li>
+    <li><strong>Pulsos binaurales:</strong> metaanálisis con efecto pequeño y heterogéneo (<em>Garcia-Argibay et al., 2019, Psychol Res</em>). No se usan aquí.</li>
+    <li><strong>«Sincroniza tus ondas cerebrales»:</strong> el arrastre neural existe en laboratorio, pero la etiqueta comercial promete más de lo que prueba la literatura.</li>
+    <li><strong>Seguridad:</strong> volumen moderado, descansa el oído. Si tienes epilepsia, acúfenos o hiperacusia, consulta antes de usar sonidos pulsados. No para conducir ni maquinaria.</li>
+  </ul>
+
+  <h2 class="sec">Experimento de dos semanas (recomendado)</h2>
+  <p class="hint">Alterna por días: <strong>silencio / ruido puro / foco beta</strong>. En cada bloque anota tarjetas, páginas o aciertos y la valoración de la app. Compara medias. Esa es tu evidencia, no la del marketing.</p>
+</section>
+
+<!-- ===================================================== GUIA -->
+<section id="tab-guia" class="panel">
+  <div class="cuadros">
+    <article class="ev"><header><h3>Cómo empezar</h3></header>
+      <ol class="lista">
+        <li>Elige un sonido (para estudiar con examen: <strong>Foco profundo</strong>).</li>
+        <li>Elige Pomodoro 25/5 o 50/10 y pulsa <strong>Empezar</strong>.</li>
+        <li>Ajusta el volumen hasta que apenas lo notes.</li>
+        <li>Cuando suene la campana grave: descanso (theta). Campana doble ascendente: vuelta al trabajo.</li>
+      </ol></article>
+    <article class="ev"><header><h3>Qué sonido para qué</h3></header>
+      <table class="tabla"><thead><tr><th>Tarea</th><th>Modo</th></tr></thead><tbody>
+        <tr><td>Supuestos prácticos, problemas, redactar</td><td>Foco profundo (16 Hz)</td></tr>
+        <tr><td>Repaso de tarjetas / test rápidos</td><td>Repaso activo (40 Hz) · ≤ 25 min</td></tr>
+        <tr><td>Leer manuales, subrayar</td><td>Lectura (10 Hz)</td></tr>
+        <tr><td>Fatiga sensorial, oficina ruidosa</td><td>Enmascaramiento puro</td></tr>
+        <tr><td>Pausas</td><td>Descanso activo (6 Hz), automático</td></tr>
+      </tbody></table></article>
+    <article class="ev"><header><h3>Privacidad y licencia</h3></header>
+      <p>Todo se calcula en tu equipo. No hay red, cuentas ni telemetría. El diario de valoraciones se guarda en este navegador (<code>localStorage</code>).</p>
+      <p>© Rubén García Fuentes. Acceso libre para estudio y práctica personal. Enlace original compartible. Prohibida la redistribución no autorizada.</p></article>
+  </div>
+</section>
+</main>
+
+<footer>NeuroFoco Studio · síntesis en tiempo real (Web Audio API) · © Rubén García Fuentes. Acceso libre para estudio y práctica personal. Enlace original compartible. Prohibida la redistribución no autorizada.</footer>
+
+<script src="modos.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

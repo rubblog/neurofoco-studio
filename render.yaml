@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: neurofoco-studio
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: ./app
